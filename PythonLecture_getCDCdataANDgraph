@@ -1,0 +1,81 @@
+#自動儲存CDC全國腸病毒的表格(儲存於array)
+from selenium import webdriver
+from time import sleep
+from bs4 import BeautifulSoup
+#import time
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+url = '<<某個CDC網頁的網址>>'
+browser = webdriver.Chrome()
+browser.maximize_window()
+browser.get(url)
+
+browser.find_element_by_class_name('highcharts-button').click()
+sleep(3)
+browser.find_element_by_xpath("//*[@id='highcharts-0']/div/div/div[8]").click()
+sleep(3)
+f=open('filetest.txt', 'w', encoding='UTF-8')
+html = browser.page_source
+sp = BeautifulSoup(html, 'html.parser')
+
+
+
+w, h = 5, 104
+Matrix = [[0 for x in range(w)] for y in range(h)]
+counter = 0
+for i in range(0,4):
+    pr = (sp.find_all('th')[i]).contents
+    pr = str(pr)
+    length = len(pr)
+    pr = list(pr)
+    pr = "".join(pr)
+    length = len(pr)
+    f.write(pr[2:(length-2)])
+    f.write('\t')
+    if(counter%4 == 3):
+        f.write('\n')
+    counter+=1
+
+for i in range(5, 420):
+    pr = (sp.find_all('td')[i]).contents
+    pr = list(pr)
+    pr = "".join(pr)
+    pr = int(pr)
+    Matrix[int((counter/4)-1)][counter%4] = pr
+    counter+=1
+
+# sum = Matrix[][1] +  Matrix[][2] +  Matrix[][3]
+for i in range(0, 104):
+    Matrix[i][4] = (Matrix[i][1]+Matrix[i][2]+Matrix[i][3])
+
+f.close()
+browser.close()
+browser.quit()
+
+Matrix21 = np.array(Matrix)
+Matrix21 = Matrix21[:,1]
+
+Matrix22 = np.array(Matrix)
+Matrix22 = Matrix22[:,2]
+
+Matrix23 = np.array(Matrix)
+Matrix23 = Matrix23[:,3]
+
+Matrix24 = np.array(Matrix)
+Matrix24 = Matrix24[:,4]
+
+
+
+plt.plot(Matrix21, color='r', label='a')
+plt.plot(Matrix22, color='b', label='b')
+plt.plot(Matrix23, color='g', label='c')
+plt.plot(Matrix24, color='m', label='test', linestyle='--')
+plt.legend()
+
+plt.title('Enterovirus in Taiwan')
+plt.xlabel('Day')
+plt.ylabel('Number')
+plt.show()
+
